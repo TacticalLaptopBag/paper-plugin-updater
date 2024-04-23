@@ -8,6 +8,7 @@ I'm too lazy to install Python 3.10, but apparently not lazy enough to not do it
 
 ## Install
 - Run `./install.sh path/to/server/root`
+
 The path should be where the `plugins` folder is contained.
 
 ## Usage

@@ -10,6 +10,7 @@ I'm too lazy to install Python 3.10, but apparently not lazy enough to not do it
 - Run `./install.sh path/to/server/root`
 
 The path should be where the `plugins` folder is contained.
+e.g. my plugins folder is in `my-server/plugins`, so I would run `./install.sh my-server`
 
 ## Usage
 Simply run `python3 update.py` or `./update.py` while in the server root directory.

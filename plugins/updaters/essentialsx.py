@@ -57,6 +57,10 @@ def download_asset(metadata_asset: dict):
 
 
 def update(mcVersion: str) -> list[str]:
+    if len(get_installed_files()) == 0:
+        # Plugin not installed, skip
+        return []
+
     print("Updating EssentialsX...")
     latest_metadata_url = "https://api.github.com/repos/EssentialsX/Essentials/releases/latest"
     latest_metadata = api_GET(latest_metadata_url)

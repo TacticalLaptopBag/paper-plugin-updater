@@ -42,6 +42,10 @@ def get_latest_version() -> str:
 
 
 def update(mcVersion: str) -> list[str]:
+    if get_floodgate_file() == None:
+        # Plugin not installed, skip
+        return []
+
     print("Updating Floodgate...")
     current_version = get_current_version()
     latest_version = get_latest_version()

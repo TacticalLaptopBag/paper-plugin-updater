@@ -53,6 +53,10 @@ def get_artifact_file_name(artifact_relative_path: str) -> str:
 
 
 def update(mcVersion: str) -> list[str]:
+    if get_luckperms_file() == None:
+        # Plugin not installed, skip
+        return []
+
     # Artifact base path: https://ci.lucko.me/job/LuckPerms/lastSuccessfulBuild/artifact/<artifact-relativePath>
     # Artifact relative path: bukkit/loader/build/libs/LuckPerms-Bukkit-5.4.122.jar
     # Latest build info: https://ci.lucko.me/job/LuckPerms/lastSuccessfulBuild/api/json/

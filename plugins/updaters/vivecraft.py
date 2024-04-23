@@ -52,6 +52,10 @@ def get_latest_version(asset: dict) -> str:
 
 
 def update(mcVersion: str) -> list[str]:
+    if get_vivecraft_file() == None:
+        # Plugin not installed, skip
+        return []
+
     print("Updating Vivecraft...")
     latest_metadata_url = "https://api.github.com/repos/jrbudda/Vivecraft_Spigot_Extensions/releases/latest"
     latest_metadata = api_GET(latest_metadata_url)

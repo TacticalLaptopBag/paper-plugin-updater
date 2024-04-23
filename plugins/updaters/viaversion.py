@@ -42,6 +42,10 @@ def get_latest_version(metadata: dict) -> str:
 
 
 def update(mcVersion: str) -> list[str]:
+    if get_file() == None:
+        # Plugin not installed, skip
+        return []
+
     print(f"Updating {BASE_NAME}...")
     latest_metadata_url = "https://api.github.com/repos/"+REPO+"/releases/latest"
     latest_metadata = api_GET(latest_metadata_url)

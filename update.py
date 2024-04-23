@@ -31,110 +31,117 @@ def api_DOWNLOAD(endpoint: str, fileName: str) -> str:
 
 # Update paper.jar
 def paper_get_current_version() -> (int, str):
-    paperBuild = None
-    paperMCVersion = None
+    paper_build = None
+    paper_mc_version = None
     with open("version_history.json", "r") as versionFile:
         versionData = json.loads(versionFile.readline())
         print(f"Current PaperMC version: {versionData['currentVersion']}")
         # git-Paper-493 (MC: 1.20.4)
         versionDataSplitSpace = versionData["currentVersion"].split(" ")
-        paperBuildSplitDash = versionDataSplitSpace[0].split("-")
-        paperBuild = paperBuildSplitDash[-1]
-        paperMCVersion = versionDataSplitSpace[-1][:-1]
+        paper_build_split_dash = versionDataSplitSpace[0].split("-")
+        paper_build = paper_build_split_dash[-1]
+        paper_mc_version = versionDataSplitSpace[-1][:-1]
 
-    print(f"Current PaperMC build: {paperBuild}")
-    print(f"Current Minecraft version: {paperMCVersion}")
+    print(f"Current PaperMC build: {paper_build}")
+    print(f"Current Minecraft version: {paper_mc_version}")
     
-    return (int(paperBuild), paperMCVersion)
+    return (int(paper_build), paper_mc_version)
 
 
-def paper_get_latest_version(mcVersion: str) -> int:
+def paper_get_latest_version(mc_version: str) -> int:
     print("Checking latest PaperMC build...")
-    response = api_GET("/versions/" + mcVersion)
-    paperBuild = int(response["builds"][-1])
-    print(f"Latest PaperMC build: {paperBuild}")
+    response = api_GET("/versions/" + mc_version)
+    paper_build = int(response["builds"][-1])
+    print(f"Latest PaperMC build: {paper_build}")
 
-    return paperBuild
-
-
-def paper_get_build_download_name(mcVersion: str, build: int) -> str:
-    response = api_GET("/versions/" + mcVersion + "/builds/" + str(build))
-    downloadName = response["downloads"]["application"]["name"]
-    print(f"Download name: {downloadName}")
-    return downloadName
+    return paper_build
 
 
-def paper_download_build(mcVersion: str, build: int) -> str:
-    downloadName = paper_get_build_download_name(mcVersion, build)
-    newPaperPath = api_DOWNLOAD("/versions/" + mcVersion + "/builds/" + str(build) + "/downloads/" + downloadName, downloadName)
-    return newPaperPath
+def paper_get_build_download_name(mc_version: str, build: int) -> str:
+    response = api_GET("/versions/" + mc_version + "/builds/" + str(build))
+    download_name = response["downloads"]["application"]["name"]
+    print(f"Download name: {download_name}")
+    return download_name
 
 
-def paper_symlink(newPaperPath: str):
+def paper_download_build(mc_version: str, build: int) -> str:
+    download_name = paper_get_build_download_name(mc_version, build)
+    new_paper_path = api_DOWNLOAD("/versions/" + mc_version + "/builds/" + str(build) + "/downloads/" + download_name, download_name)
+    return new_paper_path
+
+
+def paper_symlink(new_paper_path: str):
     os.remove("paper.jar")
-    os.symlink(newPaperPath, "paper.jar")
+    os.symlink(new_paper_path, "paper.jar")
 
 
-def paper_update(upgradeVersion: str) -> str:
-    (paperBuild, paperMCVersion) = paper_get_current_version() 
+def paper_update(upgrade_version: str) -> str:
+    (paper_build, paper_mc_version) = paper_get_current_version() 
     print("")
 
-    if not upgradeVersion:
+    if not upgrade_version:
         print("mc_version not specified, using current MC version")
-        upgradeVersion = paperMCVersion
+        upgrade_version = paper_mc_version
 
-    latestPaperBuild = paper_get_latest_version(upgradeVersion)
-    if latestPaperBuild <= paperBuild and paperMCVersion == upgradeVersion:
+    latest_paper_build = paper_get_latest_version(upgrade_version)
+    if latest_paper_build <= paper_build and paper_mc_version == upgrade_version:
         print("Paper is already at latest build!")
-        return upgradeVersion
+        return upgrade_version
     
     print("Update available!")
 
-    latestPath = paper_download_build(upgradeVersion, latestPaperBuild)
-    paper_symlink(latestPath)
+    latest_path = paper_download_build(upgrade_version, latest_paper_build)
+    paper_symlink(latest_path)
 
-    versionFormat = "({mc}) {build}"
-    if paperMCVersion == upgradeVersion:
-        versionFormat = "{build}"
+    version_format = "({mc}) {build}"
+    if paper_mc_version == upgrade_version:
+        version_format = "{build}"
 
-    oldVersion = versionFormat.format(mc=paperMCVersion, build=paperBuild)
-    newVersion = versionFormat.format(mc=upgradeVersion, build=latestPaperBuild)
-    print(f"Successfully updated paper: {oldVersion} -> {newVersion}")
+    old_version = version_format.format(mc=paper_mc_version, build=paper_build)
+    new_version = version_format.format(mc=upgrade_version, build=latest_paper_build)
+    print(f"Successfully updated paper: {old_version} -> {new_version}")
 
-    return upgradeVersion
+    return upgrade_version
 
 
-def run_plugin_updaters(updatersDir: str, upgradeVersion: str) -> (int, int, list[str]):
-    if not os.path.isdir(updatersDir):
+def run_plugin_updaters(updaters_dir: str, upgrade_version: str) -> (int, int, list[str]):
+    if not os.path.isdir(updaters_dir):
         return (0, 0)
 
-    successCounter = 0
-    updaterTotal = 0
+    success_counter = 0
+    updater_total = 0
 
     plugins_accounted_for: list[str] = []
 
-    for updaterFileName in os.listdir(updatersDir):
-        (updaterFileName, updaterFileExt) = os.path.splitext(updaterFileName)
-        if updaterFileExt != ".py":
+    for updater_file_name in os.listdir(updaters_dir):
+        (updater_file_name, updater_file_ext) = os.path.splitext(updater_file_name)
+        if updater_file_ext != ".py":
             continue
 
-        updaterTotal = updaterTotal + 1
-        updaterFilePath = os.path.join(updatersDir, updaterFileName)
-        updaterModulePath = updaterFilePath.replace(os.sep, ".")
-        updater = __import__(updaterModulePath, fromlist=[None])
+        updater_total = updater_total + 1
+        updater_file_path = os.path.join(updaters_dir, updater_file_name)
+        updater_module_path = updater_file_path.replace(os.sep, ".")
+        updater = __import__(updater_module_path, fromlist=[None])
+        did_attempt = False
         try:
             os.chdir("plugins")
-            files = updater.update(upgradeVersion)
-            plugins_accounted_for.extend(files)
-            successCounter = successCounter + 1
+            files = updater.update(upgrade_version)
+            did_attempt = len(files) > 0
+            if did_attempt:
+                plugins_accounted_for.extend(files)
+                success_counter = success_counter + 1
+            else:
+                updater_total = updater_total - 1
         except:
-            print(f"Unexpected error when running the updater found in {updaterFilePath}!")
+            print(f"Unexpected error when running the updater found in {updater_file_path}!")
             traceback.print_exc() 
         finally:
             os.chdir("..")
-        print("")
 
-    return (successCounter, updaterTotal, plugins_accounted_for)
+        if did_attempt:
+            print("")
+
+    return (success_counter, updater_total, plugins_accounted_for)
 
 
 def report_updater_coverage(plugins_accounted_for_list: list[str]):
@@ -163,14 +170,14 @@ def report_updater_coverage(plugins_accounted_for_list: list[str]):
 
 def main():
     global args
-    upgradeVersion = paper_update(args["mc_version"])
+    upgrade_version = paper_update(args["mc_version"])
     print("")
 
     print(f"Updating plugins using update scripts in 'plugins/updaters'...")
     print("")
-    (updatesCompleted, totalUpdaters, plugins_accounted_for) = run_plugin_updaters("plugins/updaters", upgradeVersion)
-    if updatesCompleted == totalUpdaters:
-        print(f"Successfully updated {updatesCompleted}/{totalUpdaters} plugins!")
+    (updates_completed, total_updaters, plugins_accounted_for) = run_plugin_updaters("plugins/updaters", upgrade_version)
+    if updates_completed == total_updaters:
+        print(f"Successfully updated {updates_completed}/{total_updaters} plugins!")
         report_updater_coverage(plugins_accounted_for)
     else:
         print(f"Failed to update some plugins. {updatesCompleted}/{totalUpdaters} plugins were updated.")
